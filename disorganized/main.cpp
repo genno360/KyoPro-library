@@ -878,7 +878,8 @@ struct Idx2D {
 	int H = 0;
 	int W = 0;
 };
-
+//unionfind:元ネタ(おそらく)
+//https://zenn.dev/reputeless/books/standard-cpp-for-competitive-programming/viewer/union-find
 class UNIONFIND
 {
 public:
