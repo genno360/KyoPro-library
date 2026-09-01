@@ -1,4 +1,4 @@
-﻿#include <bits/stdc++.h>
+#include <bits/stdc++.h>
 #include <atcoder/all>
 using namespace atcoder;
 /*	using	*/
@@ -1544,8 +1544,7 @@ namespace heuristic {
 	class BURN {
 	public:
 		BURN(State& s, Task task, Prob prob, double tl = 1.95)
-			: state(s), task(task), prob(prob), timeLimit(tl) {
-		}
+			: state(s), task(task), prob(prob), timeLimit(tl) {}
 		double time;
 		void run() {
 			TIMER timer;
@@ -1641,6 +1640,46 @@ namespace heuristic {
 		state.print();
 	}
 
+}
+
+struct State {
+	using ACTION = int;
+	int score_;
+
+	PersistentStack<ACTION> stack;// どの行動で来たか
+
+
+	uint64_t hash_;
+
+	State() {
+
+	}
+
+	bool isDone() const {
+		return false;
+	}
+
+	void advance(const ACTION& action) {
+		// 状態更新
+		// score_ もここで更新
+
+	}
+	pair<int, uint64_t> try_move(const ACTION& action) const {
+		//点数とハッシュを返す
+		return { 0,0 };
+	}
+	vector<ACTION> legalActions() const {
+		vector<ACTION> act;
+
+
+		return act;
+	}
+
+	//bool operator<(const State& other) const {		//未使用
+	//	return score_ > other.score_; // 降順
+	//}
+};
+namespace BEAMSEARCH {
 	// 行動を復元する永続stack
 	//https://jetbead.github.io/AtCoderHeuristicContestMemo/Library/persistent_stack.html
 	template <class T>
@@ -1670,9 +1709,8 @@ namespace heuristic {
 	private:
 		shared_ptr<History> head;
 	};
-
 	struct Beam {
-		using ACTION = int;
+
 		/*TODO:スコアが小さいほど良いかどうかを確認する*/
 		bool LOWER_IS_BETTER = true;
 		const int BEAM_WIDTH = 700;
@@ -1701,42 +1739,7 @@ namespace heuristic {
 			}
 		};
 
-		struct State {
-			int score_;
 
-			PersistentStack<ACTION> stack;// どの行動で来たか
-
-
-			uint64_t hash_;
-
-			State() {
-
-			}
-
-			bool isDone() const {
-				return false;
-			}
-
-			void advance(const ACTION& action) {
-				// 状態更新
-				// score_ もここで更新
-
-			}
-			pair<int, uint64_t> try_move(const ACTION& action) const {
-				//点数とハッシュを返す
-				return { 0,0 };
-			}
-			vector<ACTION> legalActions() const {
-				vector<ACTION> act;
-
-
-				return act;
-			}
-
-			//bool operator<(const State& other) const {		//未使用
-			//	return score_ > other.score_; // 降順
-			//}
-		};
 
 		State make_first() {
 			State state;
@@ -1852,13 +1855,163 @@ namespace heuristic {
 		}
 	};
 }
+namespace BEAMSEARCH_TREE {
+
+	// 行動列を共有して保持する永続 stack。
+	// 分岐した State 同士で共通の履歴をコピーせずに使えます。
+	template <class T>
+	class PersistentStack {
+		struct History {
+			T v;
+			std::shared_ptr<const History> parent;
+			History(const T& value, std::shared_ptr<const History> previous)
+				: v(value), parent(std::move(previous)) {}
+		};
+
+		std::shared_ptr<const History> head;
+
+	public:
+		PersistentStack() = default;
+		explicit PersistentStack(std::shared_ptr<const History> value) : head(std::move(value)) {}
+
+		bool empty() const { return !head; }
+		const T& top() const { return head->v; }
+		PersistentStack push(const T& value) const {
+			return PersistentStack(std::make_shared<History>(value, head));
+		}
+		PersistentStack pop() const { return PersistentStack(head->parent); }
+
+		std::vector<T> to_vector() const {
+			std::vector<T> result;
+			for (PersistentStack cur = *this; !cur.empty(); cur = cur.pop()) {
+				result.push_back(cur.top());
+			}
+			std::reverse(result.begin(), result.end());
+			return result;
+		}
+	};
+
+	// State に必要なメンバー:
+	//   Score score_; Hash hash_; PersistentStack<ACTION> stack;
+	//   bool isDone() const;
+	//   void advance(const ACTION&);
+	//   std::pair<Score, Hash> try_move(const ACTION&) const;
+	//   std::vector<ACTION> legalActions() const;
+	// try_move は advance 後の score_ と hash_ を、副作用なしで返します。
+	template <class State, class ACTION, class Score = int, class Hash = std::uint64_t>
+	class Beam {
+	public:
+
+		bool LOWER_IS_BETTER;
+		int BEAM_WIDTH;
+		int BEAM_TURN;
+
+		struct TemporaryNode {
+			Score score;
+			Hash hash;
+			int node_index;
+			ACTION actions_;
+			std::size_t order;  // 完全同点時の再現可能なタイブレーク
+		};
+
+		struct Result {
+			bool found;
+			int turn;
+			State state;
+			std::vector<ACTION> actions;
+		};
+
+		Beam(int beam_width = 700, int beam_turn = 1000, bool lower_is_better = true)
+			: LOWER_IS_BETTER(lower_is_better),
+			BEAM_WIDTH(std::max(1, beam_width)),
+			BEAM_TURN(std::max(0, beam_turn)) {}
+
+		// スコア a が b より良いとき true。
+		bool better(const Score& a, const Score& b) const {
+			return LOWER_IS_BETTER ? a < b : a > b;
+		}
+
+		// make_first() で作った初期状態を渡して実行します。
+		// 完了状態が見つかれば、その深さで最良のものを返します。
+		Result task(const State& first) const {
+			if (first.isDone()) return { true, 0, first, first.stack.to_vector() };
+
+			std::vector<State> cur{ first };
+			std::vector<State> next;
+			cur.reserve(BEAM_WIDTH);
+			next.reserve(BEAM_WIDTH);
+			int searched_turn = 0;
+
+			for (int turn = 0; turn < BEAM_TURN; ++turn) {
+				std::vector<TemporaryNode> temp_nodes;
+				std::unordered_map<Hash, std::size_t> mp_index;
+				temp_nodes.reserve(static_cast<std::size_t>(BEAM_WIDTH) * 8);
+				mp_index.reserve(static_cast<std::size_t>(BEAM_WIDTH) * 8);
+
+				for (int i = 0; i < static_cast<int>(cur.size()); ++i) {
+					const State& st = cur[i];
+					for (const ACTION& action : st.legalActions()) {
+						const auto [next_score, next_hash] = st.try_move(action);
+						auto it = mp_index.find(next_hash);
+						if (it == mp_index.end()) {
+							mp_index.emplace(next_hash, temp_nodes.size());
+							temp_nodes.push_back({ next_score, next_hash, i, action, temp_nodes.size() });
+						}
+						else {
+							TemporaryNode& old = temp_nodes[it->second];
+							if (better(next_score, old.score)) {
+								old = { next_score, next_hash, i, action, old.order };
+							}
+						}
+					}
+				}
+
+				if (temp_nodes.empty()) break;
+				const auto compare = [this](const TemporaryNode& a, const TemporaryNode& b) {
+					if (a.score == b.score) return a.order < b.order;
+					return better(a.score, b.score);
+				};
+				const int keep = std::min(BEAM_WIDTH, static_cast<int>(temp_nodes.size()));
+				std::partial_sort(temp_nodes.begin(), temp_nodes.begin() + keep, temp_nodes.end(), compare);
+
+				next.clear();
+				for (int i = 0; i < keep; ++i) {
+					const TemporaryNode& node = temp_nodes[i];
+					next.push_back(cur[node.node_index]);
+					State& child = next.back();
+					child.advance(node.actions_);
+					child.stack = child.stack.push(node.actions_);
+				}
+				searched_turn = turn + 1;
+
+				auto done = std::find_if(next.begin(), next.end(), [](const State& st) { return st.isDone(); });
+				if (done != next.end()) {
+					for (auto it = done + 1; it != next.end(); ++it) {
+						if (it->isDone() && better(it->score_, done->score_)) done = it;
+					}
+					return { true, turn + 1, *done, done->stack.to_vector() };
+				}
+				cur.swap(next);
+			}
+
+			// 指定深さまで完了しなかった場合も、最後に残った最良状態を返します。
+			auto best = std::min_element(cur.begin(), cur.end(), [this](const State& a, const State& b) {
+				return better(a.score_, b.score_);
+			});
+			return { false, searched_turn, *best, best->stack.to_vector() };
+		}
+	};
+
+
+}
+}
 
 using namespace heuristic;
 #endif
 //struct LINE {
 //	/*
 //		ax + by + c = 0の直線
-//	
+//
 //	*/
 //
 //	ll a;
@@ -1877,7 +2030,7 @@ using namespace heuristic;
 //		normalization();
 //	}
 //	//表現の正規化 　以下をすることで同じ直線が一意に表現される
-//	void normalization(){
+//	void normalization() {
 //		//全部の最大公約数で割る
 //		ll g = gcd(a, gcd(b, c));
 //		a /= g, b /= g, c /= g;
@@ -1918,13 +2071,14 @@ using namespace heuristic;
 //};
 ////垂直二等分線を得る
 //LINE get_canonical(ll px, ll py, ll qx, ll qy) {
-//	
+//
 //	long long a = 2 * (qx - px);
 //	long long b = 2 * (qy - py);
 //	long long c = px * px + py * py - qx * qx - qy * qy;
-//	LINE l(a,b,c);
+//	LINE l(a, b, c);
 //	return l;
 //}
+
 
 int main() {
 
