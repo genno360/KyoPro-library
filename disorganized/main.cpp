@@ -1642,44 +1642,14 @@ namespace heuristic {
 
 }
 
-struct State {
-	using ACTION = int;
-	int score_;
-
-	PersistentStack<ACTION> stack;// どの行動で来たか
-
-
-	uint64_t hash_;
-
-	State() {
-
-	}
-
-	bool isDone() const {
-		return false;
-	}
-
-	void advance(const ACTION& action) {
-		// 状態更新
-		// score_ もここで更新
-
-	}
-	pair<int, uint64_t> try_move(const ACTION& action) const {
-		//点数とハッシュを返す
-		return { 0,0 };
-	}
-	vector<ACTION> legalActions() const {
-		vector<ACTION> act;
-
-
-		return act;
-	}
-
-	//bool operator<(const State& other) const {		//未使用
-	//	return score_ > other.score_; // 降順
-	//}
-};
+// State は問題ごとに定義する。通常版・木上版とも、下記の同じ契約を使う。
+// using ACTION = ...;
+// Score score_; Hash hash_; BEAMSEARCH::PersistentStack<ACTION> stack;
+// bool isDone() const; void advance(const ACTION&);
+// pair<Score, Hash> try_move(const ACTION&) const; vector<ACTION> legalActions() const;
 namespace BEAMSEARCH {
+	// 旧実装。下の共通 API に置き換えたため残さない。
+#if 0
 	// 行動を復元する永続stack
 	//https://jetbead.github.io/AtCoderHeuristicContestMemo/Library/persistent_stack.html
 	template <class T>
@@ -1854,6 +1824,7 @@ namespace BEAMSEARCH {
 
 		}
 	};
+#endif
 }
 namespace BEAMSEARCH_TREE {
 
@@ -1891,15 +1862,19 @@ namespace BEAMSEARCH_TREE {
 		}
 	};
 
-	// State に必要なメンバー:
+	// 通常ビームサーチと木上ビームサーチで共通の State 契約:
+	//   using ACTION = ...;
 	//   Score score_; Hash hash_; PersistentStack<ACTION> stack;
 	//   bool isDone() const;
 	//   void advance(const ACTION&);
 	//   std::pair<Score, Hash> try_move(const ACTION&) const;
 	//   std::vector<ACTION> legalActions() const;
 	// try_move は advance 後の score_ と hash_ を、副作用なしで返します。
-	template <class State, class ACTION, class Score = int, class Hash = std::uint64_t>
+	template <class State>
 	class Beam {
+		using ACTION = typename State::ACTION;
+		using Score = decay_t<decltype(declval<State>().score_)>;
+		using Hash = decay_t<decltype(declval<State>().hash_)>;
 	public:
 
 		bool LOWER_IS_BETTER;
@@ -2004,8 +1979,53 @@ namespace BEAMSEARCH_TREE {
 
 
 }
-}
 
+// 通常版も木上版も、State だけをテンプレート引数にする同じ API です。
+// State::ACTION / State::score_ / State::hash_ から残りの型を自動取得します。
+namespace BEAMSEARCH {
+	template <class T>
+	using PersistentStack = BEAMSEARCH_TREE::PersistentStack<T>;
+
+	template <class State>
+	using Beam = BEAMSEARCH_TREE::Beam<State>;
+}
+struct State {
+	using ACTION = int;
+	int score_;
+
+	PersistentStack<ACTION> stack;// どの行動で来たか
+
+
+	uint64_t hash_;
+
+	State() {
+
+	}
+
+	bool isDone() const {
+		return false;
+	}
+
+	void advance(const ACTION& action) {
+		// 状態更新
+		// score_ もここで更新
+
+	}
+	pair<int, uint64_t> try_move(const ACTION& action) const {
+		//点数とハッシュを返す
+		return { 0,0 };
+	}
+	vector<ACTION> legalActions() const {
+		vector<ACTION> act;
+
+
+		return act;
+	}
+
+	//bool operator<(const State& other) const {		//未使用
+	//	return score_ > other.score_; // 降順
+	//}
+};
 using namespace heuristic;
 #endif
 //struct LINE {
