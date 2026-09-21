@@ -22,6 +22,8 @@ using mint = modint998244353;
 #define No cout << "No" << el
 #define debug(x) cerr << #x << " = " << x << el
 #define el '\n'
+//小数表示桁数
+#define SETPREC(X)  std::fixed << std::setprecision(X)
 
 #define ALL(x) (x).begin(), (x).end()
 
