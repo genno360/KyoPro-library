@@ -23,6 +23,11 @@ using mint = modint998244353;
 #define debug(x) cerr << #x << " = " << x << el
 #define el '\n'
 
+#define ALL(x) (x).begin(), (x).end()
+
+//構造体にこれを加えればsort可能になる mapのkeyに構造体を使うときにも
+#define DEF_CMP(T) auto operator<=>(const T&) const = default;
+
 //#define HEURISTIC
 
 template<class T, class U> inline bool chmax(T& a, const U& b) { if (a < b) { a = b; return true; } return false; }
