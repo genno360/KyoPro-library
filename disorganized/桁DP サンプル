@@ -1,0 +1,41 @@
+	//以下、https://atcoder.jp/contests/abc154/tasks/abc154_e の回答コード
+	//N 以下の整数のうち、10進表記で非0の桁をちょうど K 個持つものの個数
+	//基本的に次元3以降を各問題に合わせる形になる
+
+	//	次元1：	sz桁目(上の桁から)
+	//	次元2：	ここまでで N より小さいことが確定しているか
+	// 
+	//	※		N:		465755
+	//			now:	464***	←この地点でnowは小さいの確定
+	// 
+	//	次元3:	ここまでの構築で"0"を何回使用したか
+
+	ll dp[101][2][5] = {};//すべて0初期化
+
+	string N; int K; cin >> N >> K;
+
+	int SZ = N.size();
+
+	dp[0][0][0] = 1;
+
+	rep(i, 0, SZ) {
+		rep(isless, 0, 2) {
+			rep(k, 0, K + 1) {
+				int limit = N[i] - '0';//この桁で使用していい最大の値
+				rep(nxt, 0, limit+1) {
+					if (isless == 0)break;
+					int i2 = i + 1;//次のけた
+
+					int isless2 = isless;
+					if (nxt < limit)isless2 = 1;//上のけたから見て今の桁が目標より小さいなら小さいことが確定
+					int k2 = k;
+					if (nxt != 0)k2++;//0ではない数を使うため
+
+					dp[i + 1][isless2][k2] += dp[i][isless][k];
+				}
+
+			}
+		}
+	}
+	ll ans = dp[SZ][0][K] + dp[SZ][1][K];
+	cout << ans << endl;
