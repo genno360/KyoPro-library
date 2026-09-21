@@ -22,8 +22,8 @@
 		rep(isless, 0, 2) {
 			rep(k, 0, K + 1) {
 				int limit = N[i] - '0';//この桁で使用していい最大の値
+				if (isless == 1)limit = 9;
 				rep(nxt, 0, limit+1) {
-					if (isless == 0)break;
 					int i2 = i + 1;//次のけた
 
 					int isless2 = isless;
