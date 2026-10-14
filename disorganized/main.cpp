@@ -1,3 +1,6 @@
+//予め事前にAIが作ったコードを含んでいます、下記参照
+//https://github.com/genno360/KyoPro-library
+
 #include <bits/stdc++.h>
 #include <atcoder/all>
 using namespace atcoder;
@@ -6,13 +9,13 @@ using namespace std;
 using ll = long long;
 using pll = pair<ll, ll>;
 using pii = pair<int, int>;
-
-using mint = modint998244353;
+using mint = modint1000000007;
+//using mint = modint998244353;
 /*	マクロ	*/
-#define rep(i, a, n) for (ll i = a; i < (ll)(n); i++)
-#define REP(i, a, n) for (ll i = a; i <= (ll)(n); i++)
-#define repm(i, a, n, m) for (ll i = a; i < (ll)(n); i += m)
-#define rrep(i, a, n) for (ll i = a; i >= (ll)(n); i--)
+#define rep(i, P, n) for (ll i = P; i < (ll)(n); i++)
+#define REP(i, P, n) for (ll i = P; i <= (ll)(n); i++)
+#define repm(i, P, n, m) for (ll i = P; i < (ll)(n); i += m)
+#define rrep(i, P, n) for (ll i = P; i >= (ll)(n); i--)
 
 //#define rep(i, A, n) for (int i = A; i < (n); i++)
 //#define REP(i, A, n) for (int i = A; i <= (n); i++)
@@ -30,6 +33,7 @@ using mint = modint998244353;
 //構造体にこれを加えればsort可能になる mapのkeyに構造体を使うときにも
 #define DEF_CMP(T) auto operator<=>(const T&) const = default;
 
+
 //#define HEURISTIC
 
 template<class T, class U> inline bool chmax(T& a, const U& b) { if (a < b) { a = b; return true; } return false; }
@@ -46,42 +50,21 @@ const ll INF = LLONG_MAX / 4;
 
 /*	演算子オーバーロード	*/
 
-/* pair */
-template<typename T>
-std::pair<T, T> operator+(const std::pair<T, T>& a, const std::pair<T, T>& b) {
-	return { a.first + b.first, a.second + b.second };
-}
-
-template<typename T>
-std::pair<T, T> operator-(const std::pair<T, T>& a, const std::pair<T, T>& b) {
-	return { a.first - b.first, a.second - b.second };
-}
-
-template<typename T>
-std::pair<T, T> operator*(const std::pair<T, T>& a, const std::pair<T, T>& b) {
-	return { a.first * b.first, a.second * b.second };
-}
-template<typename T1, typename T2>
-istream& operator >> (istream& is, std::pair<T1, T2>& p) {
-	is >> p.first >> p.second;
-	return is;
-}
-template<typename T1, typename T2>
-std::ostream& operator<< (std::ostream& os, std::pair<T1, T2> p) {
-	os << p.first << " " << p.second;
-	return os;
-}
-/*	標準出力系	*/
+/* 標準入力 */
+template<typename T1, typename T2> istream& operator >> (istream& is, std::pair<T1, T2>& p) { is >> p.first >> p.second;	return is; }
+template<typename T>istream& operator >> (istream& is, vector<T>& vec) { for (T& x : vec) is >> x; return is; }
+/* 標準出力 */
 struct Init { Init() { ios::sync_with_stdio(0); cin.tie(0); } }init;
-template<typename T>
-istream& operator >> (istream& is, vector<T>& vec) {
-	for (T& x : vec) is >> x;
-	return is;
-}
-template<typename T>
-ostream& operator << (ostream& os, vector<T>& vec) {
-	for (int i = 0; i < vec.size(); i++) {
-		os << vec[i] << (i + 1 == vec.size() ? "" : " ");
+
+template<typename T1, typename T2>
+std::ostream& operator<< (std::ostream& os, std::pair<T1, T2> p) { os << p.first << " " << p.second; return os; }
+/*	標準出力系	*/
+template<typename T>ostream& operator << (ostream& os, vector<T>& vec) {
+	bool first = true;
+	for (const auto& x : vec) {
+		if (!first)os << ' ';
+		first = false;
+		os << x;
 	}
 	return os;
 }
@@ -105,9 +88,27 @@ ostream& operator<<(ostream& os, const map<K, V>& mp) {
 	}
 	return os;
 }
-
+template<typename T>
+ostream& operator<<(ostream& os, const multiset<T>& st) {
+	bool first = true;
+	for (const auto& x : st) {
+		if (!first) os << ' ';
+		first = false;
+		os << x;
+	}
+	return os;
+}
+template<typename K, typename V>
+ostream& operator<<(ostream& os, const multimap<K, V>& mp) {
+	bool first = true;
+	for (const auto& [k, v] : mp) {
+		if (!first) os << ' ';
+		first = false;
+		os << k << ':' << v;
+	}
+	return os;
+}
 #ifdef _DEBUG
-
 template<class T>
 struct DebugMultiset : std::multiset<T> {
 	using Base = std::multiset<T>;
@@ -120,18 +121,14 @@ struct DebugMultiset : std::multiset<T> {
 		assert(false);
 	}
 };
-
 #define multiset DebugMultiset
-
 #else
-
 #define multiset std::multiset
-
 #endif
 
 /*	乱数	*/
 struct Xorshift128 {
-	uint64_t x = 123456789, y = 362436069, z = 521288629, w = 88675123;
+	uint64_t x = 16354976620950309654ULL, y = 12985040979062584389ULL, z = 7179524487253565650ULL, w = 4967618042211634159ULL;
 	inline uint64_t next() {
 		uint64_t t = x ^ (x << 11);
 		x = y; y = z; z = w;
@@ -163,6 +160,8 @@ inline void shuffle_vector(vector<T>& v) {
 	}
 }
 
+/* 時間管理 */
+
 class TIMER {
 	chrono::system_clock::time_point start;
 public:
@@ -183,6 +182,7 @@ public:
 
 /*	演算	*/
 
+/* 数値演算 */
 template<typename T>
 T pow_int(T base, unsigned int exponent) {
 	T result = 1;
@@ -194,44 +194,6 @@ T pow_int(T base, unsigned int exponent) {
 		exponent >>= 1;  // 2で割る
 	}
 	return result;
-}
-
-template<typename T>
-double euclid(T& a, T& b) {
-	ll dx = a.first - b.first;
-	ll dy = a.second - b.second;
-	return sqrt(dx * dx + dy * dy);
-}
-template<typename T>
-double euclid(T& ax, T& ay, T& bx, T& by) {
-	ll dx = ax - bx;
-	ll dy = ay - by;
-	return sqrt(dx * dx + dy * dy);
-}
-template<typename T>
-T getDistanceSq(pair<T, T> p1, pair<T, T>  p2) {
-	return (p1.first - p2.first) * (p1.first - p2.first) + (p1.second - p2.second) * (p1.second - p2.second);
-}
-template<typename T>
-ll manhattan(T& a, T& b) {
-	return abs(a.first - b.first) + abs(a.second - b.second);
-}
-template<typename T>
-ll manhattan(T& ax, T& ay, T& bx, T& by) {
-	return abs(ax - bx) + abs(ay - by);
-}
-vector<int> manacher(string& str) {
-	//その文字を中心とした最長の回文の半径を計算する
-	vector<int> res(str.size());
-	int i = 0, j = 0;
-	while (i < str.size()) {
-		while (i - j >= 0 && i + j < str.size() && str[i - j] == str[i + j]) ++j;
-		res[i] = j;
-		int k = 1;
-		while (i - k >= 0 && k + res[i - k] < j) res[i + k] = res[i - k], ++k;
-		i += k; j -= k;
-	}
-	return res;
 }
 
 vector<ll> cumulative_sum(const vector<ll>& A) {//累積和 元配列 A の区間 [l, r) の和は B[r] - B[l]
@@ -260,9 +222,7 @@ vector<pair<T, int>> RLE(const vector<T>& A) { //ランレングス圧縮
 	}
 	return ans;
 }
-bool isInArea(int a, int b, int H, int W) {
-	return a >= 0 && b >= 0 && a < H && b < W;
-}
+
 //素数列挙(n以下)
 vector < ll > era(int n) {
 	vector < bool > isprime;
@@ -394,239 +354,130 @@ struct Combination {// modint用二項係数を扱う構造体
 	}
 };
 
-/*	class	*/
+/* 座標 */
+
+template<typename T>
+double euclid(T a, T b) {
+	ll dx = a.first - b.first;
+	ll dy = a.second - b.second;
+	return sqrt(dx * dx + dy * dy);
+}
+template<typename T>
+double euclid(T ax, T ay, T bx, T by) {
+	ll dx = ax - bx;
+	ll dy = ay - by;
+	return sqrt(dx * dx + dy * dy);
+}
+template<typename T>
+T getDistanceSq(T x1, T y1, T x2, T y2) {
+	T dx = x1 - x2;
+	T dy = y1 - y2;
+	return dx * dx + dy * dy;
+}
+
+template<typename T>
+ll manhattan(T ax, T ay, T bx, T by) {
+	return abs(ax - bx) + abs(ay - by);
+}
+bool isInArea(int a, int b, int H, int W) {
+	return a >= 0 && b >= 0 && a < H && b < W;
+}
+
+/* 幾何学 */
+struct LINE {
+	/*
+		ax + by + c = 0の直線
+
+	*/
+
+	ll a;
+	ll b;
+	ll c;
+	friend auto operator<=>(const LINE&, const LINE&) = default;
+	LINE(ll A, ll B, ll C) {
+		a = A; b = B; c = C;
+		normalization();
+	}
+	LINE(ll px, ll py, ll qx, ll qy) {
+		a = qy - py;
+		b = px - qx;
+		c = qx * py - px * qy;
+
+		normalization();
+	}
+	//表現の正規化 　以下をすることで同じ直線が一意に表現される
+	void normalization() {
+		//全部の最大公約数で割る
+		ll g = gcd(a, gcd(b, c));
+		a /= g, b /= g, c /= g;
+		//傾きを正の向きに直す
+		if (a < 0) a = -a, b = -b, c = -c;
+		//傾き0なら、bを正にする
+		if (a == 0 and b < 0) b = -b, c = -c;
+	}
+	//点が線上にある
+	bool contains(ll x, ll y) const {
+		return a * x + b * y + c == 0;
+	}
+	//点が上側or下側
+	ll eval(ll x, ll y) const {
+		return a * x + b * y + c;
+	}
+
+	//平行の関係
+	bool is_parallel(const LINE& rhs) const {
+		return a * rhs.b == b * rhs.a;
+	}
+	//同じ
+	bool is_same(const LINE& rhs) const {
+		return *this == rhs;
+	}
+	//垂直
+	bool is_vertical(const LINE& rhs) const {
+		return a * rhs.a + b * rhs.b == 0;
+	}
+	//向きベクトル
+	pair<ll, ll> direction() const {
+		return { -b,a };
+	}
+	// 法線ベクトル
+	pair<ll, ll> normal() const {
+		return { a,b };
+	}
+};
+//垂直二等分線を得る
+LINE get_canonical(ll px, ll py, ll qx, ll qy) {
+
+	ll a = 2 * (qx - px);
+	ll b = 2 * (qy - py);
+	ll c = px * px + py * py - qx * qx - qy * qy;
+	LINE l(a, b, c);
+	return l;
+}
+
+/* 文字列 */
+vector<int> manacher(string& str) {
+	//その文字を中心とした最長の回文の半径を計算する
+	vector<int> res(str.size());
+	int i = 0, j = 0;
+	while (i < str.size()) {
+		while (i - j >= 0 && i + j < str.size() && str[i - j] == str[i + j]) ++j;
+		res[i] = j;
+		int k = 1;
+		while (i - k >= 0 && k + res[i - k] < j) res[i + k] = res[i - k], ++k;
+		i += k; j -= k;
+	}
+	return res;
+}
+
+
 /* グラフ */
 
-/*	class	*/
-class GraphAlgo {
-public:
-	GraphAlgo() = default;
-	GraphAlgo(int N) {
-		concat.resize(N);
-
-	}
-	GraphAlgo(int N, int M, vector<pii>& vec) {
-		assert(vec.size() == M);
-		concat.resize(N);
-		rep(i, 0, M)add_bidir(vec[i].first, vec[i].second);
-	}
-	GraphAlgo(vector<vector<char>>& S, char c) {
-
-		int H, W;
-		H = S.size();
-		W = S[0].size();
-		concat.resize(H * W);
-		rep(i, 0, H)rep(j, 0, W - 1) {
-			if (S[i][j] == c && S[i][j + 1] == c) {
-				add_bidir(i * W + j, i * W + (j + 1));
-			}
-		}
-		rep(i, 0, H - 1)rep(j, 0, W) {
-			if (S[i][j] == c && S[i + 1][j] == c) {
-				add_bidir(i * W + j, (i + 1) * W + j);
-			}
-		}
-
-	}
-	void add(int a, int b) { concat[a].insert(b); }
-	void add_bidir(int a, int b) { add(a, b); add(b, a); }
-	void remove(int a, int b) { concat[a].erase(b); }
-	void remove_bidir(int a, int b) { remove(a, b); remove(b, a); }
-	bool find(int a, int b) { return concat[a].find(b) != concat[a].end(); }
-	//深さ優先探索して連結成分を得る
-	void dfs(int v, set<int>& visited) {
-		if (visited.count(v)) return;
-		visited.insert(v);
-		for (int u : concat[v]) {
-			dfs(u, visited);
-		}
-	}
-	void dfs(int v, vector<bool>& visited) {
-		if (visited[v]) return;
-		visited[v] = true;
-		for (int u : concat[v]) {
-			dfs(u, visited);
-		}
-	}
-	//幅優先探索してstartからの最短距離を得る
-	map<int, int> bfs(int start) {
-		map<int, int> dist;
-		queue<int> q;
-		q.push(start);
-		dist[start] = 0;
-		while (!q.empty()) {
-			int v = q.front(); q.pop();
-			for (int u : concat[v]) {
-				if (!dist.count(u)) {
-					dist[u] = dist[v] + 1;
-					q.push(u);
-				}
-			}
-		}
-		return dist;
-	}
-	//幅優先探索して任意の場所からstartへ行く最短経路を返す
-
-	void bfs(int start,
-		map<int, int>& dist,
-		map<int, int>& route) {
-
-
-		queue<int> q;
-		q.push(start);
-		dist[start] = 0;
-
-		while (!q.empty()) {
-			int v = q.front(); q.pop();
-			for (int u : concat[v]) {
-				if (!dist.count(u)) {
-					dist[u] = dist[v] + 1;
-					route[u] = v;
-					q.push(u);
-				}
-			}
-		}
-		return;
-	}
-	//無向グラフの閉路検出
-	//有向グラフ向けではない
-	bool dfs_cycle(int v, int parent, vector<bool>& visited) {
-
-		visited[v] = true;
-		for (int u : concat[v]) {
-			if (!visited[u]) {
-				if (dfs_cycle(u, v, visited)) return true;
-			}
-			else if (u != parent) {
-				// 親以外の訪問済み頂点に戻る → サイクル
-				return true;
-			}
-		}
-		return false;
-	}
-
-	void print_debug() {
-		//この形式にする
-		//https://emkjp.github.io/WebTools/dot.html
-		cerr << "https://emkjp.github.io/WebTools/dot.html" << el;
-		rep(i, 0, concat.size()) {
-			for (auto c : concat[i]) {
-				cerr << i << " " << c << el;
-			}
-		}
-
-	}
-	vector<set<int>> concat;
-
-};
-class WeightGraphAlgo {//辺に重みがある
-public:
-	WeightGraphAlgo() = default;
-	WeightGraphAlgo(int N) {
-		concat.resize(N);
-	}
-	WeightGraphAlgo(int N, int M, vector<int>& A, vector<int>& B, vector<ll>& C) {
-		assert(A.size() == M);
-		assert(B.size() == M);
-		assert(C.size() == M);
-		concat.resize(N);
-		rep(i, 0, M)add_bidir(A[i], B[i], C[i]);
-	}
-	void add(int a, int b, ll c) { concat[a].insert({ b,c }); }
-	void add_bidir(int a, int b, ll c) { add(a, b, c); add(b, a, c); }
-	void remove(int a, int b, ll c) { concat[a].erase({ b, c }); }
-	void remove_bidir(int a, int b, ll c) { remove(a, b, c); remove(b, a, c); }
-
-	vector<ll> dijkstra(int start) {//ダイクストラ
-		int N = concat.size();
-		vector<ll> dist(N, INF);
-		dist[start] = 0;
-
-		priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> pq;
-		pq.push({ 0, start });
-
-		while (!pq.empty()) {
-			auto [cd, v] = pq.top(); pq.pop();
-			if (cd > dist[v]) continue;
-
-			for (auto& nx : concat[v]) {
-				int to = nx.first;
-				ll cost = nx.second;
-				if (dist[to] > cd + cost) {
-					dist[to] = cd + cost;
-					pq.push({ dist[to], to });
-				}
-			}
-		}
-		return dist;
-	}
-	vector<vector<ll>> warshall_floyd() {//ワ―シャルフロイド
-		int N = concat.size();
-		vector<vector<ll>> dist(N, vector<ll>(N, INF));
-
-		for (int i = 0; i < N; i++) dist[i][i] = 0;
-		for (int i = 0; i < N; i++) {
-			for (auto& nx : concat[i]) {
-				dist[i][nx.first] = min(dist[i][nx.first], nx.second);
-			}
-		}
-
-		for (int k = 0; k < N; k++) {
-			for (int i = 0; i < N; i++) {
-				if (dist[i][k] == INF) continue;
-				for (int j = 0; j < N; j++) {
-					if (dist[k][j] == INF) continue;
-					dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);//kを経由したほうがより近いなら、i->jの最短距離を更新
-				}
-			}
-		}
-
-		return dist;
-	}
-	void print_debug() {
-		//この形式にする
-		//https://emkjp.github.io/WebTools/dot.html
-		cerr << "https://emkjp.github.io/WebTools/dot.html" << el;
-		rep(i, 0, concat.size()) {
-			for (auto c : concat[i]) {
-				cerr << i << " " << c << el;
-			}
-		}
-
-	}
-	vector<set<pair<int, ll>>> concat;
-};
 class GraphHeuristic {
 public:
-	GraphHeuristic() = default;
 	GraphHeuristic(int N) {
 		concat.resize(N);
 		pos.resize(N, vector<int>(N, -1));
-	}
-	GraphHeuristic(int N, int M, vector<pii>& vec) {
-		assert(vec.size() == M);
-		concat.resize(N);
-		pos.resize(N, vector<int>(N, -1));
-		rep(i, 0, M)add_bidir(vec[i].first, vec[i].second);
-	}
-	GraphHeuristic(vector<vector<char>>& S, char c) {
-
-		int H, W;
-		H = S.size();
-		W = S[0].size();
-		concat.resize(H * W);
-		pos.resize(H * W, vector<int>(H * W, -1));
-		rep(i, 0, H)rep(j, 0, W - 1) {
-			if (S[i][j] == c && S[i][j + 1] == c) {
-				add_bidir(i * W + j, i * W + (j + 1));
-			}
-		}
-		rep(i, 0, H - 1)rep(j, 0, W) {
-			if (S[i][j] == c && S[i + 1][j] == c) {
-				add_bidir(i * W + j, (i + 1) * W + j);
-			}
-		}
-
 	}
 	void add(int a, int b) {
 		pos[a][b] = concat[a].size();
@@ -647,35 +498,15 @@ public:
 	void remove_bidir(int a, int b) { remove(a, b); remove(b, a); }
 	bool find(int a, int b) { return pos[a][b] != -1; }
 	//深さ優先探索して連結成分を得る
-	void dfs(int start, set<int>& visited) {
-		stack<int> st;
-		st.push(start);
-
-		while (!st.empty()) {
-			int v = st.top();
-			st.pop();
-
-			if (visited.count(v)) continue;
-			visited.insert(v);
-
-			for (int u : concat[v]) {
-				if (!visited.count(u)) {
-					st.push(u);
-				}
-			}
-		}
-	}
+// --- 高速 DFS (vector<bool> のみ) ---
 	void dfs(int start, vector<bool>& visited) {
 		stack<int> st;
 		st.push(start);
-
 		while (!st.empty()) {
 			int v = st.top();
 			st.pop();
-
 			if (visited[v]) continue;
 			visited[v] = true;
-
 			for (int u : concat[v]) {
 				if (!visited[u]) {
 					st.push(u);
@@ -684,41 +515,20 @@ public:
 		}
 	}
 
-	//幅優先探索してstartからの最短距離を得る
-	map<int, int> bfs(int start) {
-		map<int, int> dist;
-		queue<int> q;
-		q.push(start);
-		dist[start] = 0;
-		while (!q.empty()) {
-			int v = q.front(); q.pop();
-			for (int u : concat[v]) {
-				if (!dist.count(u)) {
-					dist[u] = dist[v] + 1;
-					q.push(u);
-				}
-			}
-		}
-		return dist;
-	}
-	//幅優先探索して任意の場所からstartへ行く最短経路を返す
-	//以下を初期化しておく
-	//vector<int> dist(N, -1);   // -1 = 未訪問
-	//vector<int> route(N, -1);  // 親
-	void bfs(int start,
-		vector<int>& dist,
-		vector<int>& route) {
-
+	// --- 高速 BFS---
+	// 事前に以下を初期化して渡す:
+	// vector<int> dist(N, -1);   // -1 = 未訪問
+	// vector<int> route(N, -1);  // 親
+	void bfs(int start, vector<int>& dist, vector<int>& route) {
 		vector<int> q;
 		q.reserve(dist.size());
-
 		int head = 0;
+
 		q.push_back(start);
 		dist[start] = 0;
 
 		while (head < (int)q.size()) {
 			int v = q[head++];
-
 			for (int u : concat[v]) {
 				if (dist[u] == -1) {
 					dist[u] = dist[v] + 1;
@@ -729,6 +539,121 @@ public:
 		}
 	}
 
+	// 距離のみが必要な場合のオーバーロード
+	void bfs(int start, vector<int>& dist) {
+		vector<int> q;
+		q.reserve(dist.size());
+		int head = 0;
+
+		q.push_back(start);
+		dist[start] = 0;
+
+		while (head < (int)q.size()) {
+			int v = q[head++];
+			for (int u : concat[v]) {
+				if (dist[u] == -1) {
+					dist[u] = dist[v] + 1;
+					q.push_back(u);
+				}
+			}
+		}
+	}
+	// ==========================================
+	// 木の中心 (Tree Center) を求める
+	// ==========================================
+	// 木の最長パス（直径）の中点となる頂点をすべて返します（1個または2個）
+	vector<int> get_tree_centers() {
+		int N = concat.size();
+		if (N == 0) return {};
+
+		// 1. 適当な頂点 (0) から最も遠い頂点 u を探す
+		vector<int> dist1(N, -1), route1(N, -1);
+		bfs(0, dist1, route1);
+
+		int u = 0;
+		for (int i = 0; i < N; ++i) {
+			if (dist1[i] > dist1[u]) {
+				u = i;
+			}
+		}
+
+		// 2. 頂点 u から最も遠い頂点 v を探す (これで直径の両端が求まる)
+		vector<int> dist2(N, -1), route2(N, -1);
+		bfs(u, dist2, route2);
+
+		int v = u;
+		for (int i = 0; i < N; ++i) {
+			if (dist2[i] > dist2[v]) {
+				v = i;
+			}
+		}
+
+		// 3. u から v へのパス（直径）を復元する
+		vector<int> path;
+		for (int cur = v; cur != -1; cur = route2[cur]) {
+			path.push_back(cur);
+		}
+
+		// 4. パスの中央の頂点を中心とする
+		int len = path.size();
+		if (len % 2 == 1) {
+			return { path[len / 2] };
+		}
+		else {
+			return { path[len / 2 - 1], path[len / 2] };
+		}
+	}
+
+	// ==========================================
+	// 木の重心 (Tree Centroid) を求める
+	// ==========================================
+	// 削除したときに残る最大の部分木のサイズが N/2 以下になる頂点をすべて返します（1個または2個）
+	vector<int> get_tree_centroids() {
+		int N = concat.size();
+		if (N == 0) return {};
+
+		vector<int> centroids;
+		vector<int> subtree_size(N, 0);
+
+		// 木のサイズを計算するためのDFS (部分木の大きさをメモ)
+		// ラムダ式を用いた再帰
+		auto dfs_size = [&](auto self, int v, int p) -> void {
+			subtree_size[v] = 1;
+			for (int u : concat[v]) {
+				if (u != p) {
+					self(self, u, v);
+					subtree_size[v] += subtree_size[u];
+				}
+			}
+		};
+
+		// 任意の頂点 (0) を根として部分木サイズを計算
+		dfs_size(dfs_size, 0, -1);
+
+		// 重心を探す
+		auto dfs_centroid = [&](auto self, int v, int p) -> void {
+			bool is_centroid = true;
+			for (int u : concat[v]) {
+				if (u != p) {
+					if (subtree_size[u] > N / 2) {
+						is_centroid = false;
+					}
+					self(self, u, v);
+				}
+			}
+			// 反対側（根の方向）の部分木のサイズは N - subtree_size[v]
+			if (N - subtree_size[v] > N / 2) {
+				is_centroid = false;
+			}
+
+			if (is_centroid) {
+				centroids.push_back(v);
+			}
+		};
+
+		dfs_centroid(dfs_centroid, 0, -1);
+		return centroids;
+	}
 	void print_debug() {
 		//この形式にする
 		//https://emkjp.github.io/WebTools/dot.html
@@ -745,18 +670,9 @@ public:
 };
 class WeightGraphHeuristic {//辺に重みがある
 public:
-	WeightGraphHeuristic() = default;
 	WeightGraphHeuristic(int N) {
 		concat.resize(N);
 		pos.resize(N, vector<int>(N, -1));
-	}
-	WeightGraphHeuristic(int N, int M, vector<int>& A, vector<int>& B, vector<ll>& C) {
-		assert(A.size() == M);
-		assert(B.size() == M);
-		assert(C.size() == M);
-		concat.resize(N);
-		pos.resize(N, vector<int>(N, -1));
-		rep(i, 0, M)add_bidir(A[i], B[i], C[i]);
 	}
 	void add(int a, int b, ll c) {
 		pos[a][b] = concat[a].size();
@@ -780,7 +696,8 @@ public:
 	void update_weight(int u, int v, ll w) {
 		concat[u][pos[u][v]].second = w;
 	}
-	vector<ll> dijkstra(int start) {//ダイクストラ
+	//ダイクストラ
+	vector<ll> dijkstra(int start) {
 		int N = concat.size();
 		vector<ll> dist(N, INF);
 		dist[start] = 0;
@@ -803,7 +720,36 @@ public:
 		}
 		return dist;
 	}
-	vector<vector<ll>> warshall_floyd() {//ワ―シャルフロイド
+	// ダイクストラ法（最短距離とルート復元用親配列を同時に返す）
+		// あらかじめ以下を初期化しておく：
+		// vector<ll> dist(N, INF);   // 最短距離
+		// vector<int> route(N, -1);  // 経路復元用の親頂点
+	void dijkstra(int start, vector<ll>& dist, vector<int>& route) {
+		int N = concat.size();
+		dist[start] = 0;
+
+		// {cost, vertex}
+		priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> pq;
+		pq.push({ 0, start });
+
+		while (!pq.empty()) {
+			auto [cd, v] = pq.top(); pq.pop();
+			if (cd > dist[v]) continue;
+
+			for (auto& nx : concat[v]) {
+				int to = nx.first;
+				ll cost = nx.second;
+				if (dist[to] > cd + cost) {
+					dist[to] = cd + cost;
+					route[to] = v; // 親を記録
+					pq.push({ dist[to], to });
+				}
+			}
+		}
+	}
+	//ワ―シャルフロイド
+	//頂点数の限界目安は400程度
+	vector<vector<ll>> warshall_floyd() {
 		int N = concat.size();
 		vector<vector<ll>> dist(N, vector<ll>(N, INF));
 
@@ -841,50 +787,7 @@ public:
 	vector<vector<int>> pos;
 };
 
-
-#ifdef HEURISTIC
-namespace graph_impl {
-	using Graph = GraphHeuristic;
-	using WGraph = WeightGraphHeuristic;
-}
-#else
-namespace graph_impl {
-	using Graph = GraphAlgo;
-	using WGraph = WeightGraphAlgo;
-}
-#endif
-using GRAPH = graph_impl::Graph;
-using WGRAPH = graph_impl::WGraph;
-
-
-struct Idx2D {
-	void init(int h, int w) {
-		H = h;
-		W = w;
-	}
-	void init(int n) {
-		H = n;
-		W = n;
-	}
-
-	int to_id(int h, int w) {
-#ifdef _DEBUG
-		assert(0 <= h);
-		assert(0 <= w);
-		assert(h < H);
-		assert(w < W);
-#endif
-		return h * W + w;
-	}
-	pii to_coord(int k) {
-#ifdef _DEBUG
-		assert(k < H * W);
-#endif
-		return { k / W,k % W };
-	}
-	int H = 0;
-	int W = 0;
-};
+//https://zenn.dev/reputeless/books/standard-cpp-for-competitive-programming/viewer/union-find
 
 class UNIONFIND
 {
@@ -1002,13 +905,13 @@ struct MinOp {
 */
 struct FenwickTree {
 	int n;
-	vector<long long> bit;
+	vector<ll> bit;
 
 	FenwickTree(int n) :n(n) {
 		bit.assign(n + 1, 0);
 	}
 
-	void add(int idx, long long val) {
+	void add(int idx, ll val) {
 		idx++;
 
 		while (idx <= n) {
@@ -1017,10 +920,10 @@ struct FenwickTree {
 		}
 	}
 
-	long long sum_prefix(int idx) {
+	ll sum_prefix(int idx) {
 		idx++;
 
-		long long res = 0;
+		ll res = 0;
 
 		while (idx > 0) {
 			res += bit[idx];
@@ -1030,7 +933,7 @@ struct FenwickTree {
 		return res;
 	}
 
-	long long sum(int l, int r) {
+	ll sum(int l, int r) {
 		if (l > r) return 0;
 
 		return sum_prefix(r)
@@ -1384,9 +1287,9 @@ void kMeansWithSizes(						//kmeans法でクラスタリング クラスタサ�
 template<class T>
 vector<pii> mst_points(const vector<pair<T, T>>& p) {	//最小全域木 
 	int N = p.size();
-	const long long INF = (1LL << 62);
+	const ll INF = (1LL << 62);
 
-	vector<long long> dist(N, INF);
+	vector<ll> dist(N, INF);
 	vector<int> parent(N, -1);
 	vector<bool> used(N, false);
 
@@ -1401,9 +1304,9 @@ vector<pii> mst_points(const vector<pair<T, T>>& p) {	//最小全域木
 
 		for (int u = 0; u < N; u++) {
 			if (used[u]) continue;
-			long long dx = p[v].first - p[u].first;
-			long long dy = p[v].second - p[u].second;
-			long long w = dx * dx + dy * dy;
+			ll dx = p[v].first - p[u].first;
+			ll dy = p[v].second - p[u].second;
+			ll w = dx * dx + dy * dy;
 			if (w < dist[u]) {
 				dist[u] = w;
 				parent[u] = v;
@@ -1418,112 +1321,91 @@ vector<pii> mst_points(const vector<pair<T, T>>& p) {	//最小全域木
 	return res;
 }
 
-
-#ifdef HEURISTIC
-namespace heuristic {
-	struct BIT_FIELD {
-		const int AREA_H = 10;
-		const int AREA_W = 10;
-		bitset<100> allocated_blocks;
-		bitset<100> LEFT_EDGE;
-		bitset<100> RIGHT_EDGE;
-
-		void init_mask() {
-			rep(i, 0, 10) {
-				LEFT_EDGE.set(i * 10 + 0);
-				RIGHT_EDGE.set(i * 10 + 9);
-			}
-		}
-		void set(int x, int y) {
-			allocated_blocks.set(x * AREA_W + y);
-		}
-		void reset(int x, int y) {
-			allocated_blocks.reset(x * AREA_W + y);
-		}
-		void bit_shift_h(int n) {
-			if (n > 0) {
-				allocated_blocks = allocated_blocks << n * AREA_W;
-			}
-			else {
-				allocated_blocks = allocated_blocks >> -n * AREA_W;
-			}
-		}
-		void bit_shift_w(int n) {
-			if (n > 0) {
-				rep(i, 0, n) {
-					allocated_blocks &= ~RIGHT_EDGE;
-					allocated_blocks <<= 1;
-				}
-
-			}
-			else {
-				rep(i, 0, n) {
-					allocated_blocks &= ~LEFT_EDGE;
-					allocated_blocks >>= 1;
-				}
-			}
-		}
-		void bit_shift_hw(int h, int w) {
-			bit_shift_h(h);
-			bit_shift_w(w);
-		}
-
-		void print() {
-
-			rep(i, 0, AREA_H) {
-				rep(j, 0, AREA_W) {
-					cout << allocated_blocks[i * AREA_W + j];
-				}
-				cout << el;
-			}
-		}
+// 行動を復元する永続stack
+//https://jetbead.github.io/AtCoderHeuristicContestMemo/Library/persistent_stack.html
+template <class T>
+class PersistentStack {
+public:
+	struct History {
+		T v;
+		shared_ptr<History> parent;
+		History(const T& v, shared_ptr<History> parent) : v(v), parent(parent) {}
 	};
-	class IndexedSet {
-	public:
-		IndexedSet(int N) {
-			index.assign(N, -1);
+
+	PersistentStack() : head(nullptr) {}
+	PersistentStack(shared_ptr<History> head) : head(head) {}
+	bool empty() const {
+		return head == nullptr;
+	}
+	T top() {
+		return head->v;
+	}
+	PersistentStack push(const T& v) {
+		return PersistentStack(make_shared<History>(v, head));
+	}
+	PersistentStack pop() {
+		return PersistentStack(head->parent);
+	}
+	std::vector<T> to_vector() const {
+		std::vector<T> result;
+		for (PersistentStack cur = *this; !cur.empty(); cur = cur.pop()) {
+			result.push_back(cur.top());
 		}
+		std::reverse(result.begin(), result.end());
+		return result;
+	}
+private:
+	shared_ptr<History> head;
+};
 
-		bool add(int a) {
-			if (index[a] != -1) return false;
+class IndexedSet {
+public:
+	IndexedSet(int N) {
+		index.assign(N, -1);
+	}
 
-			index[a] = arr.size();
-			arr.push_back(a);
-			return true;
-		}
-		bool remove(int a) {
-			if (index[a] == -1) return false;
+	bool add(int a) {
+		if (index[a] != -1) return false;
 
-			int pos = index[a];
-			int last = arr.back();
+		index[a] = arr.size();
+		arr.push_back(a);
+		return true;
+	}
+	bool remove(int a) {
+		if (index[a] == -1) return false;
 
-			arr[pos] = last;
-			index[last] = pos;
+		int pos = index[a];
+		int last = arr.back();
 
-			arr.pop_back();
-			index[a] = -1;
-			return true;
-		}
-		bool contains(int a) const {
-			return index[a] != -1;
-		}
+		arr[pos] = last;
+		index[last] = pos;
 
-		int position(int a) const {
-			return index[a];
-		}
+		arr.pop_back();
+		index[a] = -1;
+		return true;
+	}
+	bool contains(int a) const {
+		return index[a] != -1;
+	}
 
-		int operator[](int i) const {
-			return arr[i];
-		}
+	int position(int a) const {
+		return index[a];
+	}
 
-		int size() const {
-			return arr.size();
-		}
+	int operator[](int i) const {
+		return arr[i];
+	}
 
-	private:
-		vector<int> arr;    // 実体（順序付き）
-		vector<int> index;  // 値 → arr 内の位置
-	};
+	int size() const {
+		return arr.size();
+	}
+
+private:
+	vector<int> arr;    // 実体（順序付き）
+	vector<int> index;  // 値 → arr 内の位置
+};
+
+namespace ANNEALING {
 	template<class T>
 	bool temperature(
 		double& turn,
@@ -1645,43 +1527,9 @@ namespace heuristic {
 		burn.run();
 		state.print();
 	}
+}
 
-	// 行動を復元する永続stack
-	//https://jetbead.github.io/AtCoderHeuristicContestMemo/Library/persistent_stack.html
-	template <class T>
-	class PersistentStack {
-	public:
-		struct History {
-			T v;
-			shared_ptr<History> parent;
-			History(const T& v, shared_ptr<History> parent) : v(v), parent(parent) {}
-		};
-
-		PersistentStack() : head(nullptr) {}
-		PersistentStack(shared_ptr<History> head) : head(head) {}
-		bool empty() const {
-			return head == nullptr;
-		}
-		T top() {
-			return head->v;
-		}
-		PersistentStack push(const T& v) {
-			return PersistentStack(make_shared<History>(v, head));
-		}
-		PersistentStack pop() {
-			return PersistentStack(head->parent);
-		}
-		std::vector<T> to_vector() const {
-			std::vector<T> result;
-			for (PersistentStack cur = *this; !cur.empty(); cur = cur.pop()) {
-				result.push_back(cur.top());
-			}
-			std::reverse(result.begin(), result.end());
-			return result;
-		}
-	private:
-		shared_ptr<History> head;
-	};
+namespace BEAMSEARCH {
 
 	struct Beam {
 		using ACTION = int;
@@ -1853,81 +1701,10 @@ namespace heuristic {
 	};
 }
 
-using namespace heuristic;
-#endif
-struct LINE {
-	/*
-		ax + by + c = 0の直線
-
-	*/
-
-	ll a;
-	ll b;
-	ll c;
-	friend auto operator<=>(const LINE&, const LINE&) = default;
-	LINE(ll A, ll B, ll C) {
-		a = A; b = B; c = C;
-		normalization();
-	}
-	LINE(ll px, ll py, ll qx, ll qy) {
-		a = qy - py;
-		b = px - qx;
-		c = qx * py - px * qy;
-
-		normalization();
-	}
-	//表現の正規化 　以下をすることで同じ直線が一意に表現される
-	void normalization() {
-		//全部の最大公約数で割る
-		ll g = gcd(a, gcd(b, c));
-		a /= g, b /= g, c /= g;
-		//傾きを正の向きに直す
-		if (a < 0) a = -a, b = -b, c = -c;
-		//傾き0なら、bを正にする
-		if (a == 0 and b < 0) b = -b, c = -c;
-	}
-	//点が線上にある
-	bool contains(ll x, ll y) const {
-		return a * x + b * y + c == 0;
-	}
-	//点が上側or下側
-	ll eval(ll x, ll y) const {
-		return a * x + b * y + c;
-	}
-
-	//平行の関係
-	bool is_parallel(const LINE& rhs) const {
-		return a * rhs.b == b * rhs.a;
-	}
-	//同じ
-	bool is_same(const LINE& rhs) const {
-		return *this == rhs;
-	}
-	//垂直
-	bool is_vertical(const LINE& rhs) const {
-		return a * rhs.a + b * rhs.b == 0;
-	}
-	//向きベクトル
-	pair<ll, ll> direction() const {
-		return { -b,a };
-	}
-	// 法線ベクトル
-	pair<ll, ll> normal() const {
-		return { a,b };
-	}
-};
-//垂直二等分線を得る
-LINE get_canonical(ll px, ll py, ll qx, ll qy) {
-
-	long long a = 2 * (qx - px);
-	long long b = 2 * (qy - py);
-	long long c = px * px + py * py - qx * qx - qy * qy;
-	LINE l(a, b, c);
-	return l;
-}
+//using namespace ANNEALING;
+//using namespace BEAMSEARCH;
 
 
 int main() {
 
-	return 0;
 }
