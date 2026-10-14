@@ -12,6 +12,8 @@ using pii = pair<int, int>;
 using mint = modint1000000007;
 //using mint = modint998244353;
 /*	マクロ	*/
+//#define HEURISTIC_GRAPH
+
 #define rep(i, P, n) for (ll i = P; i < (ll)(n); i++)
 #define REP(i, P, n) for (ll i = P; i <= (ll)(n); i++)
 #define repm(i, P, n, m) for (ll i = P; i < (ll)(n); i += m)
@@ -32,9 +34,6 @@ using mint = modint1000000007;
 
 //構造体にこれを加えればsort可能になる mapのkeyに構造体を使うときにも
 #define DEF_CMP(T) auto operator<=>(const T&) const = default;
-
-
-//#define HEURISTIC
 
 template<class T, class U> inline bool chmax(T& a, const U& b) { if (a < b) { a = b; return true; } return false; }
 template<class T, class U> inline bool chmin(T& a, const U& b) { if (a > b) { a = b; return true; } return false; }
@@ -472,7 +471,298 @@ vector<int> manacher(string& str) {
 
 
 /* グラフ */
+class GraphAlgo {
+public:
+	GraphAlgo() = default;
+	GraphAlgo(int N) {concat.resize(N);}
+	void add(int a, int b) { concat[a].insert(b); }
+	void add_bidir(int a, int b) { add(a, b); add(b, a); }
+	void remove(int a, int b) { concat[a].erase(b); }
+	void remove_bidir(int a, int b) { remove(a, b); remove(b, a); }
+	bool find(int a, int b) { return concat[a].find(b) != concat[a].end(); }
+	//深さ優先探索して連結成分を得る
+	//深さ優先探索して連結成分を得る
+// --- 高速 DFS (vector<bool> のみ) ---
+	void dfs(int start, vector<bool>& visited) {
+		stack<int> st;
+		st.push(start);
+		while (!st.empty()) {
+			int v = st.top();
+			st.pop();
+			if (visited[v]) continue;
+			visited[v] = true;
+			for (int u : concat[v]) {
+				if (!visited[u]) {
+					st.push(u);
+				}
+			}
+		}
+	}
 
+	// --- 高速 BFS---
+	// 事前に以下を初期化して渡す:
+	// vector<int> dist(N, -1);   // -1 = 未訪問
+	// vector<int> route(N, -1);  // 親
+	void bfs(int start, vector<int>& dist, vector<int>& route) {
+		vector<int> q;
+		q.reserve(dist.size());
+		int head = 0;
+
+		q.push_back(start);
+		dist[start] = 0;
+
+		while (head < (int)q.size()) {
+			int v = q[head++];
+			for (int u : concat[v]) {
+				if (dist[u] == -1) {
+					dist[u] = dist[v] + 1;
+					route[u] = v;
+					q.push_back(u);
+				}
+			}
+		}
+	}
+
+	// 距離のみが必要な場合のオーバーロード
+	void bfs(int start, vector<int>& dist) {
+		vector<int> q;
+		q.reserve(dist.size());
+		int head = 0;
+
+		q.push_back(start);
+		dist[start] = 0;
+
+		while (head < (int)q.size()) {
+			int v = q[head++];
+			for (int u : concat[v]) {
+				if (dist[u] == -1) {
+					dist[u] = dist[v] + 1;
+					q.push_back(u);
+				}
+			}
+		}
+	}
+	// ==========================================
+	// 木の中心 (Tree Center) を求める
+	// ==========================================
+	// 木の最長パス（直径）の中点となる頂点をすべて返します（1個または2個）
+	vector<int> get_tree_centers() {
+		int N = concat.size();
+		if (N == 0) return {};
+
+		// 1. 適当な頂点 (0) から最も遠い頂点 u を探す
+		vector<int> dist1(N, -1), route1(N, -1);
+		bfs(0, dist1, route1);
+
+		int u = 0;
+		for (int i = 0; i < N; ++i) {
+			if (dist1[i] > dist1[u]) {
+				u = i;
+			}
+		}
+
+		// 2. 頂点 u から最も遠い頂点 v を探す (これで直径の両端が求まる)
+		vector<int> dist2(N, -1), route2(N, -1);
+		bfs(u, dist2, route2);
+
+		int v = u;
+		for (int i = 0; i < N; ++i) {
+			if (dist2[i] > dist2[v]) {
+				v = i;
+			}
+		}
+
+		// 3. u から v へのパス（直径）を復元する
+		vector<int> path;
+		for (int cur = v; cur != -1; cur = route2[cur]) {
+			path.push_back(cur);
+		}
+
+		// 4. パスの中央の頂点を中心とする
+		int len = path.size();
+		if (len % 2 == 1) {
+			return { path[len / 2] };
+		}
+		else {
+			return { path[len / 2 - 1], path[len / 2] };
+		}
+	}
+
+	// ==========================================
+	// 木の重心 (Tree Centroid) を求める
+	// ==========================================
+	// 削除したときに残る最大の部分木のサイズが N/2 以下になる頂点をすべて返します（1個または2個）
+	vector<int> get_tree_centroids() {
+		int N = concat.size();
+		if (N == 0) return {};
+
+		vector<int> centroids;
+		vector<int> subtree_size(N, 0);
+
+		// 木のサイズを計算するためのDFS (部分木の大きさをメモ)
+		// ラムダ式を用いた再帰
+		auto dfs_size = [&](auto self, int v, int p) -> void {
+			subtree_size[v] = 1;
+			for (int u : concat[v]) {
+				if (u != p) {
+					self(self, u, v);
+					subtree_size[v] += subtree_size[u];
+				}
+			}
+		};
+
+		// 任意の頂点 (0) を根として部分木サイズを計算
+		dfs_size(dfs_size, 0, -1);
+
+		// 重心を探す
+		auto dfs_centroid = [&](auto self, int v, int p) -> void {
+			bool is_centroid = true;
+			for (int u : concat[v]) {
+				if (u != p) {
+					if (subtree_size[u] > N / 2) {
+						is_centroid = false;
+					}
+					self(self, u, v);
+				}
+			}
+			// 反対側（根の方向）の部分木のサイズは N - subtree_size[v]
+			if (N - subtree_size[v] > N / 2) {
+				is_centroid = false;
+			}
+
+			if (is_centroid) {
+				centroids.push_back(v);
+			}
+		};
+
+		dfs_centroid(dfs_centroid, 0, -1);
+		return centroids;
+	}
+	//無向グラフの閉路検出
+	//有向グラフ向けではない
+	bool dfs_cycle(int v, int parent, vector<bool>& visited) {
+
+		visited[v] = true;
+		for (int u : concat[v]) {
+			if (!visited[u]) {
+				if (dfs_cycle(u, v, visited)) return true;
+			}
+			else if (u != parent) {
+				// 親以外の訪問済み頂点に戻る → サイクル
+				return true;
+			}
+		}
+		return false;
+	}
+	void print_debug() {
+		//この形式にする
+		//https://emkjp.github.io/WebTools/dot.html
+		cerr << "https://emkjp.github.io/WebTools/dot.html" << el;
+		rep(i, 0, concat.size()) {
+			for (auto c : concat[i]) {
+				cerr << i << " " << c << el;
+			}
+		}
+
+	}
+	vector<set<int>> concat;
+
+};
+class WeightGraphAlgo {//辺に重みがある
+public:
+	WeightGraphAlgo() = default;
+	WeightGraphAlgo(int N) {concat.resize(N);}
+	void add(int a, int b, ll c) { concat[a].insert({ b,c }); }
+	void add_bidir(int a, int b, ll c) { add(a, b, c); add(b, a, c); }
+	void remove(int a, int b, ll c) { concat[a].erase({ b, c }); }
+	void remove_bidir(int a, int b, ll c) { remove(a, b, c); remove(b, a, c); }
+
+	vector<ll> dijkstra(int start) {//ダイクストラ
+		int N = concat.size();
+		vector<ll> dist(N, INF);
+		dist[start] = 0;
+
+		priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> pq;
+		pq.push({ 0, start });
+
+		while (!pq.empty()) {
+			auto [cd, v] = pq.top(); pq.pop();
+			if (cd > dist[v]) continue;
+
+			for (auto& nx : concat[v]) {
+				int to = nx.first;
+				ll cost = nx.second;
+				if (dist[to] > cd + cost) {
+					dist[to] = cd + cost;
+					pq.push({ dist[to], to });
+				}
+			}
+		}
+		return dist;
+	}
+	// ダイクストラ法（最短距離とルート復元用親配列を同時に返す）
+	// あらかじめ以下を初期化しておく：
+	// vector<ll> dist(N, INF);   // 最短距離
+	// vector<int> route(N, -1);  // 経路復元用の親頂点
+	void dijkstra(int start, vector<ll>& dist, vector<int>& route) {
+		int N = concat.size();
+		dist[start] = 0;
+
+		// {cost, vertex}
+		priority_queue<pair<ll, int>, vector<pair<ll, int>>, greater<>> pq;
+		pq.push({ 0, start });
+
+		while (!pq.empty()) {
+			auto [cd, v] = pq.top(); pq.pop();
+			if (cd > dist[v]) continue;
+
+			for (auto& nx : concat[v]) {
+				int to = nx.first;
+				ll cost = nx.second;
+				if (dist[to] > cd + cost) {
+					dist[to] = cd + cost;
+					route[to] = v; // 親を記録
+					pq.push({ dist[to], to });
+				}
+			}
+		}
+	}
+	vector<vector<ll>> warshall_floyd() {//ワ―シャルフロイド
+		int N = concat.size();
+		vector<vector<ll>> dist(N, vector<ll>(N, INF));
+
+		for (int i = 0; i < N; i++) dist[i][i] = 0;
+		for (int i = 0; i < N; i++) {
+			for (auto& nx : concat[i]) {
+				dist[i][nx.first] = min(dist[i][nx.first], nx.second);
+			}
+		}
+
+		for (int k = 0; k < N; k++) {
+			for (int i = 0; i < N; i++) {
+				if (dist[i][k] == INF) continue;
+				for (int j = 0; j < N; j++) {
+					if (dist[k][j] == INF) continue;
+					dist[i][j] = min(dist[i][j], dist[i][k] + dist[k][j]);//kを経由したほうがより近いなら、i->jの最短距離を更新
+				}
+			}
+		}
+
+		return dist;
+	}
+	void print_debug() {
+		//この形式にする
+		//https://emkjp.github.io/WebTools/dot.html
+		cerr << "https://emkjp.github.io/WebTools/dot.html" << el;
+		rep(i, 0, concat.size()) {
+			for (auto c : concat[i]) {
+				cerr << i << " " << c << el;
+			}
+		}
+
+	}
+	vector<set<pair<int, ll>>> concat;
+};
 class GraphHeuristic {
 public:
 	GraphHeuristic(int N) {
@@ -654,6 +944,22 @@ public:
 		dfs_centroid(dfs_centroid, 0, -1);
 		return centroids;
 	}
+	//無向グラフの閉路検出
+	//有向グラフ向けではない
+	bool dfs_cycle(int v, int parent, vector<bool>& visited) {
+
+		visited[v] = true;
+		for (int u : concat[v]) {
+			if (!visited[u]) {
+				if (dfs_cycle(u, v, visited)) return true;
+			}
+			else if (u != parent) {
+				// 親以外の訪問済み頂点に戻る → サイクル
+				return true;
+			}
+		}
+		return false;
+	}
 	void print_debug() {
 		//この形式にする
 		//https://emkjp.github.io/WebTools/dot.html
@@ -665,6 +971,7 @@ public:
 		}
 
 	}
+
 	vector<vector<int>> concat;
 	vector<vector<int>> pos;	//index_map
 };
@@ -786,7 +1093,19 @@ public:
 	vector<vector<pair<int, ll>>> concat;
 	vector<vector<int>> pos;
 };
-
+#ifdef HEURISTIC_GRAPH
+namespace graph_impl {
+	using Graph = GraphHeuristic;
+	using WGraph = WeightGraphHeuristic;
+}
+#else
+namespace graph_impl {
+	using Graph = GraphAlgo;
+	using WGraph = WeightGraphAlgo;
+}
+#endif
+using GRAPH = graph_impl::Graph;
+using WGRAPH = graph_impl::WGraph;
 //https://zenn.dev/reputeless/books/standard-cpp-for-competitive-programming/viewer/union-find
 
 class UNIONFIND
