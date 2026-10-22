@@ -50,7 +50,7 @@ const ll INF = LLONG_MAX / 4;
 /*	演算子オーバーロード	*/
 
 /* 標準入力 */
-template<typename T1, typename T2> istream& operator >> (istream& is, std::pair<T1, T2>& p) { is >> p.first >> p.second;	return is; }
+template<typename T1, typename T2> istream& operator >> (istream& is, std::pair<T1, T2>& p) { is >> p.first >> p.second; return is; }
 template<typename T>istream& operator >> (istream& is, vector<T>& vec) { for (T& x : vec) is >> x; return is; }
 /* 標準出力 */
 struct Init { Init() { ios::sync_with_stdio(0); cin.tie(0); } }init;
@@ -290,6 +290,51 @@ vector<ll> convert_base_digits(//a進数をb進数に
 	return to_base_m(from_base_n(from_base, digits), to_base);
 }
 
+//二分探索
+//Funcはboolが返り値で引数に整数を持つ関数
+//https://atcoder.jp/contests/typical90/submissions/80262367
+//条件を満たす最小のnを探す
+template <typename Func>
+ll binary_search_range(ll low, ll high, Func check) {
+	ll left = low;
+	ll right = high;
+	ll result = -1; // 条件を満たす値が見つからなかった場合の初期値
+
+	while (left <= right) {
+		ll mid = left + (right - left) / 2; // オーバーフロー防止
+
+		if (check(mid)) {
+			result = mid;      // midは条件を満たすので候補として記録
+			right = mid - 1;   // さらに小さな値で満たすか左側を探索
+		}
+		else {
+			left = mid + 1;    // midは条件を満たさないので右側を探索
+		}
+	}
+	return result;
+}
+
+//条件を満たす最大のnを探す
+template <typename Func>
+ll binary_search_range_max(ll low, ll high, Func check) {
+	ll left = low;
+	ll right = high;
+	ll result = -1;
+
+	while (left <= right) {
+		ll mid = left + (right - left) / 2;
+
+		if (check(mid)) {
+			result = mid;
+			left = mid + 1;
+		}
+		else {
+			right = mid - 1;
+		}
+	}
+
+	return result;
+}
 
 struct C2 {//二項係数
 
@@ -1756,6 +1801,11 @@ namespace BEAMSEARCH {
 	};
 }
 
+//予め事前にAIが作ったコードを含んでいます、下記参照
+//https://github.com/genno360/KyoPro-library
+
+//using namespace ANNEALING;
+//using namespace BEAMSEARCH;
 
 int main() {
 
