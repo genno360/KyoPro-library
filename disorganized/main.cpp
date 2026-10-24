@@ -159,6 +159,15 @@ inline void shuffle_vector(vector<T>& v) {
 	}
 }
 
+//ある整数に対するハッシュ値
+//https://drken1215.hatenablog.com/entry/2022/05/12/105000
+inline static uint64_t splitmix64(uint64_t x) {
+	x += 0x9e3779b97f4a7c15;
+	x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9;
+	x = (x ^ (x >> 27)) * 0x94d049bb133111eb;
+	return x ^ (x >> 31);
+}
+
 /* 時間管理 */
 
 class TIMER {
@@ -1893,7 +1902,6 @@ namespace BEAMSEARCH {
 
 //using namespace ANNEALING;
 //using namespace BEAMSEARCH;
-
 
 int main() {
 
