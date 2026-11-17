@@ -4,6 +4,15 @@
 #include <bits/stdc++.h>
 #include <atcoder/all>
 using namespace atcoder;
+
+#if defined(_MSC_VER) && !defined(__clang__)
+#include <__msvc_int128.hpp>
+using u128 = std::_Unsigned128;
+using i128 = std::_Signed128;
+#else
+using u128 = unsigned __int128;
+using i128 = __int128;
+#endif
 /*	using	*/
 using namespace std;
 using ll = long long;
@@ -569,7 +578,7 @@ struct DELAUNAY {
 	}
 
 private:
-	using lll = __int128;
+	using lll = i128;
 	struct Quad {
 		Quad* rot = nullptr; Quad* o = nullptr; int p = -1; bool mark = false;
 		int& F() { return r()->p; }
@@ -1826,7 +1835,8 @@ namespace ANNEALING {
 	class BURN {
 	public:
 		BURN(State& s, Task task, Prob prob, double tl = 1.95)
-			: state(s), task(task), prob(prob), timeLimit(tl) {}
+			: state(s), task(task), prob(prob), timeLimit(tl) {
+		}
 		double time;
 		void run() {
 			TIMER timer;
@@ -2100,7 +2110,6 @@ namespace BEAMSEARCH {
 
 //using namespace ANNEALING;
 //using namespace BEAMSEARCH;
-
 
 int main() {
 
