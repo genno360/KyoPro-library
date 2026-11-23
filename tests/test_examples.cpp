@@ -9,6 +9,9 @@
 #include "../DataStructure/interval_set.hpp"
 #include "../String/run_length_encoding.hpp"
 #include "../Graph/graph.hpp"
+#include "../Graph/lca.hpp"
+#include "../String/compress.hpp"
+#include "../Math/cumulative_sum_2d.hpp"
 
 #define CHECK(x) do { if (!(x)) { cerr << "FAILED: " #x " (line " << __LINE__ << ")\n"; exit(1); } } while (0)
 
@@ -56,6 +59,21 @@ int main() {
 		S.erase(1, 2, add, del); CHECK(covered_len == 4);
 		vector<pair<ll, ll>> segs; for (auto [l, r, val] : S) segs.push_back({ l, r });
 		CHECK((segs == vector<pair<ll, ll>>{{0, 1}, { 2, 5 }}));
+	}
+	{
+		vector<ll> A = { 100, -5, 100, 7 };
+		auto B = compress(A); CHECK((B == vector<int>{2, 0, 2, 1}));
+		COMPRESS<ll> cp(A); CHECK(cp[cp.get(7)] == 7);
+	}
+	{
+		int H = 3, W = 3; IMOS2D im(H, W); im.add(0, 0, 2, 2, 1); im.add(1, 1, 3, 3, 1);
+		auto B = im.build(); CHECK(B[1][1] == 2 && B[0][2] == 0 && B[2][2] == 1);
+		CUMSUM2D cs(B); CHECK(cs.query(0, 0, H, W) == 8);
+	}
+	{
+		int N = 4; WGRAPH g(N);
+		g.add_bidir(0, 1, 5); g.add_bidir(1, 2, 2); g.add_bidir(1, 3, 7);
+		LCA lca(g, 0); CHECK(lca.wdist(2, 3) == 9); CHECK(lca.get(2, 3) == 1);
 	}
 	cout << "EXAMPLES OK" << el;
 }

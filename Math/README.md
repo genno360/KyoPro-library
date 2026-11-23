@@ -6,6 +6,7 @@
 |:--:|:--:|:--:|
 |[pow_int.hpp](pow_int.hpp)|繰り返し二乗法|`base^exponent` を O(log exponent) で計算する|
 |[cumulative_sum.hpp](cumulative_sum.hpp)|累積和|区間和を O(1) で求めるための配列を作る|
+|[cumulative_sum_2d.hpp](cumulative_sum_2d.hpp)|二次元累積和・二次元いもす法|長方形の和を O(1)、長方形への一括加算|
 |[prime.hpp](prime.hpp)|素数列挙・素因数分解|エラトステネスの篩、試し割りによる素因数分解|
 |[gcd.hpp](gcd.hpp)|最大公約数|ユークリッドの互除法|
 |[base_conversion.hpp](base_conversion.hpp)|進数変換|n 進数 ⇔ 整数、a 進数 → b 進数|
@@ -42,6 +43,26 @@ vector<ll> cumulative_sum(const vector<ll>& A)
 ```cpp
 auto B = cumulative_sum({3, 1, 4, 1, 5});
 cout << B[4] - B[1];  // A[1]+A[2]+A[3] = 6
+```
+
+## cumulative_sum_2d.hpp
+
+```cpp
+CUMSUM2D cs(A);                  // A: vector<vector<ll>>（H × W）
+cs.query(x1, y1, x2, y2);        // [x1, x2) × [y1, y2) の和（空なら 0）
+
+IMOS2D im(H, W);
+im.add(x1, y1, x2, y2, v);       // [x1, x2) × [y1, y2) に v を足す
+auto B = im.build();             // B[i][j] = マス (i, j) の値（H × W）
+```
+
+- 区間はどちらも**半開区間**（`x2`, `y2` は含まない）。
+- 計算量: `CUMSUM2D` 構築 O(HW)・クエリ O(1)、`IMOS2D` の `add` O(1)・`build` O(HW)
+
+```cpp
+IMOS2D im(H, W);
+rep(i, 0, Q) { int a, b, c, d; cin >> a >> b >> c >> d; im.add(a, b, c, d, 1); }
+auto B = im.build();
 ```
 
 ## prime.hpp
