@@ -328,6 +328,63 @@ public:
 		return dist;
 	}
 
+	// --- トポロジカルソート (有向グラフ) ---
+	// 閉路があれば空の配列を返す
+	// lex_min = true で辞書順最小 (O(M log N))
+	vector<int> topological_sort(bool lex_min = false) const {
+		int N = this->size();
+		vector<int> indeg(N, 0);
+		for (int v = 0; v < N; v++) {
+			for (const auto& nx : this->get_neighbors(v)) indeg[get_to_v(nx)]++;
+		}
+		vector<int> res;
+		res.reserve(N);
+		priority_queue<int, vector<int>, greater<int>> pq;
+		vector<int> q;
+		for (int v = 0; v < N; v++) if (indeg[v] == 0) lex_min ? pq.push(v) : q.push_back(v);
+		size_t head = 0;
+		while (lex_min ? !pq.empty() : head < q.size()) {
+			int v;
+			if (lex_min) { v = pq.top(); pq.pop(); }
+			else v = q[head++];
+			res.push_back(v);
+			for (const auto& nx : this->get_neighbors(v)) {
+				int u = get_to_v(nx);
+				if (--indeg[u] == 0) lex_min ? pq.push(u) : q.push_back(u);
+			}
+		}
+		if ((int)res.size() != N) return {};
+		return res;
+	}
+
+	// --- 0-1 BFS (重み付き用、重みは 0 か 1) ---
+	// 到達できない頂点は INF
+	vector<ll> bfs01(int start) const {
+		vector<ll> dist(this->size(), INF);
+		vector<int> route(this->size(), -1);
+		bfs01(start, dist, route);
+		return dist;
+	}
+
+	void bfs01(int start, vector<ll>& dist, vector<int>& route) const {
+		deque<int> dq;
+		dist[start] = 0;
+		dq.push_back(start);
+		while (!dq.empty()) {
+			int v = dq.front(); dq.pop_front();
+			for (const auto& nx : this->get_neighbors(v)) {
+				int to = nx.first;
+				ll cost = nx.second;
+				if (dist[to] > dist[v] + cost) {
+					dist[to] = dist[v] + cost;
+					route[to] = v;
+					if (cost == 0) dq.push_front(to);
+					else dq.push_back(to);
+				}
+			}
+		}
+	}
+
 	void print_debug() const {
 		cerr << "https://emkjp.github.io/WebTools/dot.html" << el;
 		this->print_dot(cerr);

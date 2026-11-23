@@ -6,6 +6,7 @@
 #include "../Other/timer.hpp"
 #include "../Math/pow_int.hpp"
 #include "../Math/cumulative_sum.hpp"
+#include "../Math/cumulative_sum_2d.hpp"
 #include "../Math/prime.hpp"
 #include "../Math/gcd.hpp"
 #include "../Math/base_conversion.hpp"
@@ -14,12 +15,14 @@
 #include "../Search/binary_search.hpp"
 #include "../String/run_length_encoding.hpp"
 #include "../String/manacher.hpp"
+#include "../String/compress.hpp"
 #include "../Geometry/distance.hpp"
 #include "../Geometry/line.hpp"
 #include "../Geometry/delaunay.hpp"
 #include "../Geometry/mst_points.hpp"
 #include "../Graph/graph.hpp"
 #include "../Graph/tree_diameter.hpp"
+#include "../Graph/lca.hpp"
 #include "../DataStructure/union_find.hpp"
 #include "../DataStructure/segment_tree.hpp"
 #include "../DataStructure/fenwick_tree.hpp"
@@ -40,6 +43,12 @@ int main() {
 	CHECK(pow_int<ll>(3, 13) == 1594323);
 	CHECK(pow_int<mint>(2, 40).val() == mint(2).pow(40).val());
 	{ auto B = cumulative_sum({ 3, 1, 4, 1, 5 }); CHECK(B.size() == 6); CHECK(B[4] - B[1] == 6); }
+	{
+		CUMSUM2D cs({ {1, 2, 3}, {4, 5, 6} });
+		CHECK(cs.query(0, 0, 2, 3) == 21); CHECK(cs.query(1, 1, 2, 3) == 11); CHECK(cs.query(0, 1, 2, 2) == 7); CHECK(cs.query(1, 1, 1, 3) == 0);
+		IMOS2D im(3, 4); im.add(0, 0, 2, 2, 1); im.add(1, 1, 3, 4, 10); im.add(2, 2, 2, 4, 100);
+		CHECK((im.build() == vector<vector<ll>>{{1, 1, 0, 0}, { 1, 11, 10, 10 }, { 0, 10, 10, 10 }}));
+	}
 	{ auto p = era(30); CHECK((p == vector<ll>{2, 3, 5, 7, 11, 13, 17, 19, 23, 29})); CHECK(era(2) == vector<ll>{2}); CHECK(era(1).empty()); }
 	{ auto f = prime_factor<ll>(360); CHECK((f == vector<pll>{{2, 3}, { 3, 2 }, { 5, 1 }})); CHECK(prime_factor<ll>(1).empty()); }
 	CHECK(gcd(12, 18) == 6); CHECK(gcd(7, 0) == 7); CHECK(gcd(0, 7) == 7);
@@ -53,6 +62,12 @@ int main() {
 	// --- String ---
 	{ auto r = RLE(vector<char>{'a', 'a', 'b', 'c', 'c', 'c'}); CHECK((r == vector<pair<char, int>>{{'a', 2}, { 'b', 1 }, { 'c', 3 }})); }
 	{ string s = "abaaababa"; auto r = manacher(s); CHECK((r == vector<int>{1, 2, 1, 4, 1, 2, 3, 2, 1})); }
+	{
+		vector<ll> A = { 100, -5, 100, 7 };
+		CHECK((compress(A) == vector<int>{2, 0, 2, 1}));
+		COMPRESS<ll> cp(A); CHECK(cp.size() == 3); CHECK(cp[cp.get(7)] == 7); CHECK(cp.get(8) == 2); CHECK(cp.get(-100) == 0);
+		COMPRESS<int> c2; c2.add(5); c2.add(1); c2.add(5); c2.build(); CHECK(c2.size() == 2); CHECK(c2.get(5) == 1);
+	}
 	// --- Geometry ---
 	CHECK(abs(euclid(pll{ 0, 0 }, pll{ 3, 4 }) - 5.0) < 1e-9);
 	CHECK(abs(euclid<ll>(0, 0, 3, 4) - 5.0) < 1e-9);
@@ -88,6 +103,27 @@ int main() {
 		g.add_bidir(3, 0); vector<bool> v3(5); CHECK(g.dfs_cycle(0, -1, v3)); g.remove(3, 0); g.remove(0, 3);
 		CHECK(g.find(0, 1)); CHECK(!g.find(0, 3));
 		auto d = calc_diameter_of_tree(g); CHECK(d.dist == 3);
+		LCA lca(g, 0);
+		CHECK(lca.get(3, 4) == 1); CHECK(lca.get(3, 2) == 2); CHECK(lca.get(0, 4) == 0);
+		CHECK(lca.dist(3, 4) == 3); CHECK(lca.wdist(3, 4) == 3);
+		CHECK(lca.ancestor(3, 2) == 1); CHECK(lca.ancestor(3, 3) == 0); CHECK(lca.ancestor(3, 4) == -1);
+		CHECK(lca.depth[3] == 3); CHECK(lca.parent[0] == -1); CHECK(lca.parent[4] == 1);
+		LCA l2(g, 3); CHECK(l2.get(0, 4) == 1);
+	}
+	{
+		GRAPH d(4); d.add(2, 0); d.add(0, 1); d.add(3, 1);
+		CHECK((d.topological_sort(true) == vector<int>{2, 0, 3, 1}));
+		auto t = d.topological_sort(); CHECK(t.size() == 4);
+		vector<int> pos(4); rep(i, 0, 4) pos[t[i]] = i; CHECK(pos[2] < pos[0] && pos[0] < pos[1] && pos[3] < pos[1]);
+		d.add(1, 2); CHECK(d.topological_sort().empty()); CHECK(d.topological_sort(true).empty());
+	}
+	{
+		WGRAPH g(5); g.add(0, 1, 1); g.add(1, 2, 0); g.add(0, 2, 1); g.add(2, 3, 1); g.add(0, 3, 1);
+		auto d = g.bfs01(0); CHECK((d == vector<ll>{0, 1, 1, 1, INF})); CHECK(d == g.dijkstra(0));
+		vector<ll> dist(5, INF); vector<int> route(5, -1); g.bfs01(1, dist, route);
+		CHECK(dist[3] == 1); CHECK((restoration(3, route) == vector<int>{3, 2, 1}));
+		WGRAPH t(4); t.add_bidir(0, 1, 3); t.add_bidir(1, 2, 4); t.add_bidir(1, 3, 10);
+		LCA lw(t, 0); CHECK(lw.wdist(2, 3) == 14); CHECK(lw.dist(2, 3) == 2); CHECK(lw.wdist(0, 3) == 13);
 	}
 	{
 		WGRAPH g(4);
